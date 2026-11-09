@@ -1,0 +1,7 @@
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
+  background: var(--bg, #f5f5f7);
+  color: var(--text, #1d1d1f);
+}
