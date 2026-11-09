@@ -1,0 +1,55 @@
+name: Release
+
+# v0.1.0 같은 태그를 push하면 맥용 .dmg를 빌드해서 GitHub Releases에 올린다.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: aarch64-apple-darwin # Apple Silicon (M1 이후)
+          - target: x86_64-apple-darwin # Intel 맥
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: npm ci
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'My Calendar ${{ github.ref_name }}'
+          releaseBody: |
+            ## 설치 방법
+            1. 아래 Assets에서 본인 맥에 맞는 `.dmg`를 받아요.
+               - Apple Silicon(M1 이후): `aarch64`
+               - Intel 맥: `x64`
+            2. `.dmg`를 열고 My Calendar를 Applications 폴더로 끌어다 놓아요.
+            3. 처음 실행할 때 "확인되지 않은 개발자" 경고가 뜨면 **앱을 우클릭 → 열기**를 눌러요.
+          releaseDraft: false
+          prerelease: false
+          args: --target ${{ matrix.target }} --bundles dmg
